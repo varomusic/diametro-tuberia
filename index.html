@@ -23,7 +23,6 @@
   .muted{color:#6b7280}
   footer{margin-top:16px;color:#6b7280;font-size:.85rem;text-align:center}
 
-  /* Splash overlay */
   .splash{
     position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);
     color:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;
@@ -38,7 +37,7 @@
   .splash button{background:#fff;color:#0f172a;border:none;padding:12px 16px;border-radius:12px;font-weight:700;width:auto}
   .brand{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:8px}
   .brand img{width:40px;height:40px}
-  .sig{opacity:.9;font-weight:700}
+  .sig{opacity:.9,font-weight:700}
 </style>
 </head>
 <body>
@@ -63,7 +62,7 @@
     <p class="note">Ingresa la <b>circunferencia exterior</b> que mediste con la cinta. Funciona <b>offline</b> una vez instalada. Fórmula base: <em>D = C / π</em>.</p>
 
     <label for="valor">Valor medido</label>
-    <input id="valor" type="number" inputmode="decimal" step="0.0001" placeholder="Ej: 0.25" />
+    <input id="valor" type="text" inputmode="decimal" placeholder="Ej: 0,25 o 0.25" />
 
     <div class="row">
       <div>
@@ -104,7 +103,6 @@
 </div>
 
 <script>
-  // Mostrar splash solo la primera vez
   const splash = document.getElementById('splash');
   const btnEnter = document.getElementById('btn-enter');
   if(localStorage.getItem('pipe_dia_splash_done') === '1'){
@@ -115,7 +113,6 @@
     localStorage.setItem('pipe_dia_splash_done','1');
   });
 
-  // Registrar Service Worker para offline
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(console.error);
@@ -127,13 +124,21 @@
   function aMetros(v,u){ if(u==='m')return v; if(u==='cm')return v/100; return v/1000; }
   function desdeMetros(d,ou){ if(ou==='in')return d*39.37; if(ou==='cm')return d*100; return d*1000; }
 
+  function parseNumberLocaleAware(str){
+    if(!str) return NaN;
+    str = String(str).trim().replace(',', '.'); // coma -> punto
+    str = str.replace(/[^0-9.\-]/g, '');       // limpia otros caracteres
+    return parseFloat(str);
+  }
+
   $('#calc').addEventListener('click', () => {
-    const v = parseFloat($('#valor').value);
+    const raw = $('#valor').value;
+    const v = parseNumberLocaleAware(raw);
     const u = $('#unidad').value;
     const o = $('#salida').value;
     const out = $('#res');
 
-    if(isNaN(v)||v<=0){ out.textContent = 'Ingresa un valor válido > 0'; return; }
+    if(isNaN(v) || v <= 0){ out.textContent = 'Ingresa un valor válido > 0 (ej: 0,25)'; return; }
 
     const C_m = aMetros(v,u);
     const D_m = C_m / PI;
