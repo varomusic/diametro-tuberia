@@ -23,24 +23,29 @@
   .muted{color:#6b7280}
   footer{margin-top:16px;color:#6b7280;font-size:.85rem;text-align:center}
 
+  /* Splash siempre visible al cargar */
   .splash{
     position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);
     color:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;
-    padding:24px;text-align:center
+    padding:24px;text-align:center;
+    opacity:1;transition:opacity .25s ease;
   }
+  .splash.hide{opacity:0;pointer-events:none;visibility:hidden}
+
   .splash .box{
     max-width:520px;background:rgba(255,255,255,.1);backdrop-filter:blur(6px);
     padding:24px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.2)
   }
   .splash h2{margin:0 0 8px;font-size:1.6rem}
   .splash p{margin:0 0 16px;font-size:1rem}
-  .splash button{background:#fff;color:#0f172a;border:none;padding:12px 16px;border-radius:12px;font-weight:700;width:auto}
+  .splash button{background:#fff;color:#0f172a;border:none;padding:12px 16px;border-radius:12px;font-weight:700;width:auto;cursor:pointer}
   .brand{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:8px}
   .brand img{width:40px;height:40px}
-  .sig{opacity:.9,font-weight:700}
+  .sig{opacity:.9;font-weight:700}
 </style>
 </head>
 <body>
+<!-- Splash de bienvenida -->
 <div class="splash" id="splash">
   <div class="box">
     <div class="brand">
@@ -51,15 +56,21 @@
       </div>
     </div>
     <h2>Bienvenido</h2>
-    <p>Instala esta aplicación para usarla <b>sin Internet</b>. Ingresa la circunferencia y obtén el diámetro al instante.</p>
+    <p>Abre e Instala esta aplicación para usarla <b>con Internet</b>. Ingresa la circunferencia y obtén el diámetro al instante.</p>
     <button id="btn-enter">Entrar</button>
   </div>
 </div>
 
+<!-- Contenido principal -->
 <div class="wrap">
   <div class="card">
     <h1>Calcular diámetro de tubería</h1>
-    <p class="note">Ingresa la <b>circunferencia exterior</b> que mediste con la cinta. Funciona <b>offline</b> una vez instalada. Fórmula base: <em>D = C / π</em>.</p>
+
+    <!-- 📷 Imagen ilustrativa -->
+    <img src="imagenes/tuberia.jpg" alt="Imagen de tubería" 
+        style="width:50%; max-width:240px; height:auto; display:block; margin:0 auto 12px auto; border-radius:12px;">
+
+    <p class="note">Ingresa la <b>circunferencia exterior</b> que mediste con la cinta. Funciona <b>online</b> una vez instalada. Fórmula base: <em>D = C / π</em>.</p>
 
     <label for="valor">Valor medido</label>
     <input id="valor" type="text" inputmode="decimal" placeholder="Ej: 0,25 o 0.25" />
@@ -95,30 +106,32 @@
           <li>Diámetro en metros: <code>D = C / π</code>.</li>
           <li>Salida: pulgadas = D(m) × 39.37; cm = D×100; mm = D×1000.</li>
         </ul>
-        <p class="muted">Tip: mide sin recubrimientos/aislantes para un O.D. más preciso.</p>
+        <p class="muted">Tip: Mide y limpia la superficie para un diámetro exterior más preciso.</p>
       </div>
     </details>
   </div>
-  <footer>© Calculadora de Diámetro • App creada por Alvaro Ariza • PWA offline</footer>
+  <footer>© Calculadora de Diámetro • App creada por Alvaro Ariza</footer>
 </div>
 
 <script>
-  const splash = document.getElementById('splash');
-  const btnEnter = document.getElementById('btn-enter');
-  if(localStorage.getItem('pipe_dia_splash_done') === '1'){
-    splash.style.display = 'none';
-  }
-  btnEnter.addEventListener('click', () => {
-    splash.style.display = 'none';
-    localStorage.setItem('pipe_dia_splash_done','1');
+  // Splash: siempre visible al abrir; se oculta al presionar "Entrar"
+  document.addEventListener('DOMContentLoaded', () => {
+    const splash = document.getElementById('splash');
+    const btnEnter = document.getElementById('btn-enter');
+    btnEnter.addEventListener('click', () => {
+      splash.classList.add('hide'); // animación suave
+      // Si prefieres ocultarlo de golpe: splash.style.display = 'none';
+    });
   });
 
+  // Registro del Service Worker (PWA)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(console.error);
     });
   }
 
+  // --- Lógica de la calculadora ---
   const PI = Math.PI;
   const $ = s => document.querySelector(s);
   function aMetros(v,u){ if(u==='m')return v; if(u==='cm')return v/100; return v/1000; }
@@ -151,3 +164,4 @@
 </script>
 </body>
 </html>
+
