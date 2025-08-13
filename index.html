@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0ea5e9" />
+<title>Diámetro de Tubería</title>
+<style>
+  :root{--pad:18px}
+  html,body{height:100%}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f6f7f9;color:#111}
+  .wrap{max-width:640px;margin:auto;padding:var(--pad)}
+  .card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:calc(var(--pad) * 1.1)}
+  h1{font-size:1.35rem;margin:.2rem 0 1rem}
+  label{display:block;font-weight:600;margin:.75rem 0 .35rem}
+  input,select,button{width:100%;padding:14px;border:1px solid #d9dbe0;border-radius:12px;font-size:1rem}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .out{font-size:1.25rem;background:#f2f4f7;padding:14px;border-radius:12px;text-align:center;margin-top:12px}
+  .note{font-size:.92rem;color:#4b5563}
+  button{background:#0ea5e9;color:white;border:none;font-weight:700;margin-top:12px;border-radius:12px}
+  button:active{transform:scale(.997)}
+  .muted{color:#6b7280}
+  footer{margin-top:16px;color:#6b7280;font-size:.85rem;text-align:center}
+
+  /* Splash overlay */
+  .splash{
+    position:fixed;inset:0;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);
+    color:#fff;display:flex;align-items:center;justify-content:center;z-index:9999;
+    padding:24px;text-align:center
+  }
+  .splash .box{
+    max-width:520px;background:rgba(255,255,255,.1);backdrop-filter:blur(6px);
+    padding:24px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.2)
+  }
+  .splash h2{margin:0 0 8px;font-size:1.6rem}
+  .splash p{margin:0 0 16px;font-size:1rem}
+  .splash button{background:#fff;color:#0f172a;border:none;padding:12px 16px;border-radius:12px;font-weight:700;width:auto}
+  .brand{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:8px}
+  .brand img{width:40px;height:40px}
+  .sig{opacity:.9;font-weight:700}
+</style>
+</head>
+<body>
+<div class="splash" id="splash">
+  <div class="box">
+    <div class="brand">
+      <img src="icons/icon-192.png" alt="icono">
+      <div>
+        <div class="sig">App creada por Alvaro Ariza</div>
+        <small>Calculadora de Diámetro de Tubería</small>
+      </div>
+    </div>
+    <h2>Bienvenido</h2>
+    <p>Instala esta aplicación para usarla <b>sin Internet</b>. Ingresa la circunferencia y obtén el diámetro al instante.</p>
+    <button id="btn-enter">Entrar</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1>Calcular diámetro de tubería</h1>
+    <p class="note">Ingresa la <b>circunferencia exterior</b> que mediste con la cinta. Funciona <b>offline</b> una vez instalada. Fórmula base: <em>D = C / π</em>.</p>
+
+    <label for="valor">Valor medido</label>
+    <input id="valor" type="number" inputmode="decimal" step="0.0001" placeholder="Ej: 0.25" />
+
+    <div class="row">
+      <div>
+        <label for="unidad">Unidad de entrada</label>
+        <select id="unidad">
+          <option value="m">metros (m)</option>
+          <option value="cm">centímetros (cm)</option>
+          <option value="mm">milímetros (mm)</option>
+        </select>
+      </div>
+      <div>
+        <label for="salida">Resultado en</label>
+        <select id="salida">
+          <option value="in">pulgadas (in)</option>
+          <option value="cm">centímetros (cm)</option>
+          <option value="mm">milímetros (mm)</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="calc">Calcular diámetro</button>
+    <div id="res" class="out">—</div>
+
+    <details style="margin-top:12px">
+      <summary>Ver fórmula y precisión</summary>
+      <div class="note">
+        <p>Conversión y fórmula:</p>
+        <ul>
+          <li>Normalizamos C a metros: m, cm/100, mm/1000.</li>
+          <li>Diámetro en metros: <code>D = C / π</code>.</li>
+          <li>Salida: pulgadas = D(m) × 39.37; cm = D×100; mm = D×1000.</li>
+        </ul>
+        <p class="muted">Tip: mide sin recubrimientos/aislantes para un O.D. más preciso.</p>
+      </div>
+    </details>
+  </div>
+  <footer>© Calculadora de Diámetro • App creada por Alvaro Ariza • PWA offline</footer>
+</div>
+
+<script>
+  // Mostrar splash solo la primera vez
+  const splash = document.getElementById('splash');
+  const btnEnter = document.getElementById('btn-enter');
+  if(localStorage.getItem('pipe_dia_splash_done') === '1'){
+    splash.style.display = 'none';
+  }
+  btnEnter.addEventListener('click', () => {
+    splash.style.display = 'none';
+    localStorage.setItem('pipe_dia_splash_done','1');
+  });
+
+  // Registrar Service Worker para offline
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    });
+  }
+
+  const PI = Math.PI;
+  const $ = s => document.querySelector(s);
+  function aMetros(v,u){ if(u==='m')return v; if(u==='cm')return v/100; return v/1000; }
+  function desdeMetros(d,ou){ if(ou==='in')return d*39.37; if(ou==='cm')return d*100; return d*1000; }
+
+  $('#calc').addEventListener('click', () => {
+    const v = parseFloat($('#valor').value);
+    const u = $('#unidad').value;
+    const o = $('#salida').value;
+    const out = $('#res');
+
+    if(isNaN(v)||v<=0){ out.textContent = 'Ingresa un valor válido > 0'; return; }
+
+    const C_m = aMetros(v,u);
+    const D_m = C_m / PI;
+    const D_out = desdeMetros(D_m,o);
+    const num = (o==='in') ? D_out.toFixed(2) : D_out.toFixed(1);
+    out.textContent = `${num} ${o}`;
+  });
+
+  $('#valor').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#calc').click(); });
+</script>
+</body>
+</html>
