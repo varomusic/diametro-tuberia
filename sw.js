@@ -1,10 +1,11 @@
-const CACHE_NAME = 'pipe-dia-cache-v3'; // <— súbelo (v3, v4…)
+const CACHE_NAME = 'pipe-dia-cache-v4';   // súbelo
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './sw.js',
-  './icons/icon-192.jpg',
-  './icons/icon-512.jpg',
-  './tuberia.jpg' // <— agrega la imagen
+  './icon-192.png',   // ← raíz, PNG
+  './icon-512.png',   // ← raíz, PNG
+  './tuberia.jpg'     // ← tu foto en la raíz
 ];
+
